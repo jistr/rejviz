@@ -13,19 +13,22 @@
 import mock
 
 import rejviz.cmd.builder as builder
+import rejviz.tests.utils as tutils
 
 
-@mock.patch('rejviz.cmd.builder.tmp')
-@mock.patch('rejviz.cmd.subprocess')
-@mock.patch('rejviz.cmd.sys.argv', new=['--one', '--two'])
-def test_main(argv, subprocess, tmp):
-    # prepare
-    tmp.create_dir.return_value = '/tmp/abc'
+class BuilderTest(tutils.TestCase):
 
-    # run
-    builder.main()
+    @mock.patch('rejviz.cmd.builder.tmp')
+    @mock.patch('rejviz.cmd.subprocess')
+    @mock.patch('rejviz.cmd.sys.argv', new=['--one', '--two'])
+    def test_main(argv, subprocess, tmp):
+        # prepare
+        tmp.create_dir.return_value = '/tmp/abc'
 
-    # verify
-    tmp.create_dir.assert_called_with()
-    subprocess.call.assert_called_with(['virt-builder', '--one', '--two'])
-    tmp.remove_dir.assert_called_with('/tmp/abc')
+        # run
+        builder.main()
+
+        # verify
+        tmp.create_dir.assert_called_with()
+        subprocess.call.assert_called_with(['virt-builder', '--one', '--two'])
+        tmp.remove_dir.assert_called_with('/tmp/abc')
