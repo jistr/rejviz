@@ -28,4 +28,4 @@ def test_main(argv, subprocess, tmp):
     # verify
     tmp.create_dir.assert_called_with()
     subprocess.call.assert_called_with(['virt-builder', '--one', '--two'])
-    tmp.delete_dir.assert_called_with('/tmp/abc')
+    tmp.remove_dir.assert_called_with('/tmp/abc')
