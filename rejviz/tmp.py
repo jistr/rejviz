@@ -23,7 +23,7 @@ def create_dir():
     tmp_dir = _random_dir_name()
     while (path.exists(tmp_dir)):
         tmp_dir = _random_dir_name()
-    os.mkdir(tmp_dir, '0700')
+    os.mkdir(tmp_dir, 0o0700)
     return tmp_dir
 
 

@@ -10,6 +10,8 @@
 # implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+import logging
+import os
 import os.path as path
 import random
 
@@ -18,6 +20,7 @@ import jinja2
 import rejviz.utils as utils
 
 
+LOG = logging.getLogger(__file__)
 NIC_CONFIG_PREFIX = 'etc/sysconfig/network-scripts/ifcfg-'
 
 
@@ -41,13 +44,16 @@ def process_args(args, tmp_dir):
 
 
 def _nic_values_to_args(nic_string, tmp_dir):
+    LOG.debug("NIC string %s", nic_string)
     nic_vars = _ensure_nic_vars(utils.parse_keyvals(nic_string))
     config_contents = _render_nic_template(nic_vars)
     config_file_path = NIC_CONFIG_PREFIX + nic_vars['name']
     tmp_config_file_path = path.join(tmp_dir, config_file_path)
     target_config_file_path = path.join('/', config_file_path)
+    os.makedirs(path.dirname(tmp_config_file_path), 0o700)
     with open(tmp_config_file_path, 'w') as config_file:
         config_file.write(config_contents)
+    LOG.info("Adding NIC with params %s", str(nic_vars))
     return [
         '--upload',
         ':'.join([tmp_config_file_path, target_config_file_path]),
@@ -64,13 +70,17 @@ def _render_nic_template(nic_vars):
 
 
 def _ensure_nic_vars(nic_vars):
+    LOG.debug("NIC vars before processing %s", str(nic_vars))
     new_vars = dict(nic_vars)
-
-    new_vars.setdefault('hwaddr', _generate_mac_address())
 
     if not new_vars.get('name'):
         raise ValueError("Invalid NIC parameters - name not set: %s"
                          % str(nic_vars))
+
+    new_vars.setdefault('hwaddr', _generate_mac_address())
+
+    if new_vars.get('ipaddr'):
+        new_vars.setdefault('bootproto', 'static')
 
     if new_vars.get('bootproto') == 'static':
         if not new_vars.get('ipaddr'):
@@ -93,6 +103,7 @@ def _ensure_nic_vars(nic_vars):
         new_vars.pop('netmask', None)
         new_vars.pop('broadcast', None)
 
+    LOG.debug("NIC vars after processing %s", str(new_vars))
     return new_vars
 
 

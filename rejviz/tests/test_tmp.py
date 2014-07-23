@@ -24,7 +24,7 @@ class TmpTest(tutils.TestCase):
     def test_create_dir(self, mkdir, exists):
         tmp_dir = tmp.create_dir()
 
-        mkdir.assert_called_with(tmp_dir, '0700')
+        mkdir.assert_called_with(tmp_dir, 0o700)
         self.assertThat(tmp_dir,
                         matchers.MatchesRegex('^/tmp/rejviz-builder-\\d+$'))
 

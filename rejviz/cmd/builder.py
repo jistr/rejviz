@@ -10,23 +10,32 @@
 # implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+import logging
 import subprocess
 import sys
 
+import rejviz.nic as nic
 import rejviz.tmp as tmp
+
+
+logging.basicConfig(level=logging.INFO)
+LOG = logging.getLogger(__name__)
 
 
 def main():
     try:
         tmp_dir = tmp.create_dir()
+        LOG.debug('Created tmp directory %s', tmp_dir)
         virt_builder_args = _process_args(sys.argv[1:], tmp_dir)
         _run_virt_builder(virt_builder_args)
     finally:
         tmp.remove_dir(tmp_dir)
+        LOG.debug('Removed tmp directory %s', tmp_dir)
 
 
 def _process_args(args, tmp_dir):
-    return args
+    processed = nic.process_args(args, tmp_dir)
+    return processed
 
 
 def _run_virt_builder(args):

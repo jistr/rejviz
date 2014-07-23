@@ -18,5 +18,5 @@ class UtilsTest(tutils.TestCase):
 
     def test_parse_keyvals(self):
         expected = {'a': 'b', 'c': 'd'}
-        self.assertEqual(expected, utils.parse_keyvals("a=b;c=d"))
-        self.assertEqual(expected, utils.parse_keyvals("a:b,c:d", ',', ':'))
+        self.assertEqual(expected, utils.parse_keyvals("a=b,c=d"))
+        self.assertEqual(expected, utils.parse_keyvals("a:b/c:d", '/', ':'))

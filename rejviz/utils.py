@@ -13,7 +13,7 @@
 from six.moves import reduce
 
 
-def parse_keyvals(keyvals_string, item_separator=';', kv_separator='='):
+def parse_keyvals(keyvals_string, item_separator=',', kv_separator='='):
     keyvals_raw = keyvals_string.split(item_separator)
 
     def keyvals_to_hash(keyvals, item):
