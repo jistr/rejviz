@@ -28,13 +28,14 @@ def create_dir():
 
 
 def remove_dir(tmp_dir):
-    if tmp_dir.find(TMP_DIR_BASE):
+    if tmp_dir.find(TMP_DIR_BASE) == 0:
         shutil.rmtree(tmp_dir)
     else:
-        raise ValueError("Wanted to remove '%(to_remove)' but only directories"
-                         "beginning with '%(prefix)' can be removed."
-                         % {'to_remove': tmp_dir, 'prefix': TMP_DIR_BASE})
+        raise ValueError(
+            "Wanted to remove \'%(to_remove)s\' but only directories"
+            "beginning with \'%(prefix)s\' can be removed."
+            % {'to_remove': tmp_dir, 'prefix': TMP_DIR_BASE})
 
 
 def _random_dir_name():
-    return TMP_DIR_BASE + random.randint(1, 999999)
+    return TMP_DIR_BASE + str(random.randint(1, 999999))

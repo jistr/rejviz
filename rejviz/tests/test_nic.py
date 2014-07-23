@@ -38,7 +38,7 @@ class NicTest(tutils.TestCase):
             '--install', 'wget',
         ], final_args)
         nic_values_to_args.assert_called_with(
-            '192.168.122.10;hwaddr=ab:cd:ef:gh:ij', '/tmp/dir')
+            'ipaddr=192.168.122.10;hwaddr=ab:cd:ef:gh:ij', '/tmp/dir')
 
     @mock.patch('rejviz.nic._nic_values_to_args',
                 return_value=['--upload', '/one:/two'])
@@ -60,4 +60,4 @@ class NicTest(tutils.TestCase):
             '--install=wget',
         ], final_args)
         nic_values_to_args.assert_called_with(
-            '192.168.122.10;hwaddr=ab:cd:ef:gh:ij', '/tmp/dir')
+            'ipaddr=192.168.122.10;hwaddr=ab:cd:ef:gh:ij', '/tmp/dir')

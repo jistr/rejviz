@@ -19,9 +19,9 @@ import rejviz.tests.utils as tutils
 class BuilderTest(tutils.TestCase):
 
     @mock.patch('rejviz.cmd.builder.tmp')
-    @mock.patch('rejviz.cmd.subprocess')
-    @mock.patch('rejviz.cmd.sys.argv', new=['--one', '--two'])
-    def test_main(argv, subprocess, tmp):
+    @mock.patch('subprocess.call')
+    @mock.patch('sys.argv', new=['rejviz-builder', '--one', '--two'])
+    def test_main(argv, call, tmp):
         # prepare
         tmp.create_dir.return_value = '/tmp/abc'
 
@@ -30,5 +30,5 @@ class BuilderTest(tutils.TestCase):
 
         # verify
         tmp.create_dir.assert_called_with()
-        subprocess.call.assert_called_with(['virt-builder', '--one', '--two'])
+        call.assert_called_with(['virt-builder', '--one', '--two'])
         tmp.remove_dir.assert_called_with('/tmp/abc')

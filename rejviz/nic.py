@@ -13,16 +13,16 @@
 
 def process_args(args, tmp_dir):
     final_args = []
-    for i in len(args):
-        arg = args[i]
+    args_iter = iter(args)
+    for arg in args_iter:
         # if not '--nic' or '--nic=something', just pass it untouched
         if arg.find('--nic=') != 0 and arg != '--nic':
             final_args.append(arg)
         # if just '--nic', we're looking for the next element in args
         # array to fetch the values from
         elif arg == '--nic':
-            i += 1
-            final_args += _nic_values_to_args(args[i], tmp_dir)
+            nic_values = next(args_iter)
+            final_args += _nic_values_to_args(nic_values, tmp_dir)
         # if specified as '--nic=values', remove the '--nic=' part
         else:
             nic_values = arg[len('--nic='):]

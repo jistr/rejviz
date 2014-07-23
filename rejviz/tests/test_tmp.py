@@ -11,6 +11,7 @@
 # permissions and limitations under the License.
 
 import mock
+import testtools.matchers as matchers
 
 import rejviz.tests.utils as tutils
 import rejviz.tmp as tmp
@@ -20,11 +21,12 @@ class TmpTest(tutils.TestCase):
 
     @mock.patch('rejviz.tmp.path.exists', return_value=False)
     @mock.patch('rejviz.tmp.os.mkdir')
-    def test_create_dir(self, exists, mkdir):
+    def test_create_dir(self, mkdir, exists):
         tmp_dir = tmp.create_dir()
 
         mkdir.assert_called_with(tmp_dir, '0700')
-        self.assertRegex(tmp_dir, '^/tmp/rejviz-builder-\\d+$')
+        self.assertThat(tmp_dir,
+                        matchers.MatchesRegex('^/tmp/rejviz-builder-\\d+$'))
 
     @mock.patch('rejviz.tmp.shutil.rmtree')
     def test_remove_dir_ok(self, rmtree):
@@ -33,5 +35,5 @@ class TmpTest(tutils.TestCase):
 
     @mock.patch('rejviz.tmp.shutil.rmtree')
     def test_remove_dir_bad_prefix(self, rmtree):
-        tmp.remove_dir('/tmp/rejviz-123')
-        self.assertEqual([], tmp.remove_dir.mock_calls)
+        self.assertRaises(ValueError, tmp.remove_dir, '/tmp/rejviz-123')
+        self.assertEqual([], rmtree.mock_calls)
