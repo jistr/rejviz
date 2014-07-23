@@ -10,6 +10,11 @@
 # implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+import os.path as path
+import random
+
+import jinja2
+
 
 def process_args(args, tmp_dir):
     final_args = []
@@ -30,5 +35,56 @@ def process_args(args, tmp_dir):
     return final_args
 
 
-def _nic_values_to_args(nic_values, tmp_dir):
+def _nic_values_to_args(nic_string, tmp_dir):
     pass
+
+
+def _render_nic_template(nic_vars):
+    template_file_name = path.join(
+        path.dirname(path.realpath(__file__)), 'templates', 'ifcfg-eth.j2')
+    with open(template_file_name) as template_file:
+        template = jinja2.Template(template_file.read())
+
+    return template.render(**nic_vars)
+
+
+def _ensure_nic_vars(nic_vars):
+    new_vars = dict(nic_vars)
+
+    new_vars.setdefault('hwaddr', _generate_mac_address())
+
+    if not new_vars.get('name'):
+        raise ValueError("Invalid NIC parameters - name not set: %s"
+                         % str(nic_vars))
+
+    if new_vars.get('bootproto') == 'static':
+        if not new_vars.get('ipaddr'):
+            raise ValueError("NIC '%(name)s' - when bootproto is 'static'"
+                             "it is required to specify also 'ipaddr'")
+
+        # "123.456.789.123" => "123.456.789."
+        ip_prefix = new_vars['ipaddr'][:(new_vars['ipaddr'].rindex('.') + 1)]
+
+        if not new_vars.get('network'):
+            new_vars['network'] = ip_prefix + '0'
+        if not new_vars.get('netmask'):
+            new_vars['netmask'] = '255.255.255.0'
+        if not new_vars.get('broadcast'):
+            new_vars['broadcast'] = ip_prefix + '255'
+    else:
+        new_vars['bootproto'] = 'dhcp'
+        new_vars.pop('ipaddr', None)
+        new_vars.pop('network', None)
+        new_vars.pop('netmask', None)
+        new_vars.pop('broadcast', None)
+
+    return new_vars
+
+
+def _generate_mac_address():
+    prefix = '52:54:00:'  # 52:54:00 is libvirt default
+
+    def one_group():
+        return ''.join([random.choice('0123456789abcdef') for _ in range(2)])
+
+    return prefix + ':'.join([one_group() for _ in range(3)])

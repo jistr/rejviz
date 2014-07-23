@@ -11,6 +11,7 @@
 # permissions and limitations under the License.
 
 import mock
+import testtools.matchers as matchers
 
 import rejviz.nic as nic
 import rejviz.tests.utils as tutils
@@ -61,3 +62,104 @@ class NicTest(tutils.TestCase):
         ], final_args)
         nic_values_to_args.assert_called_with(
             'ipaddr=192.168.122.10;hwaddr=ab:cd:ef:gh:ij', '/tmp/dir')
+
+    def test_render_nic_template(self):
+        nic_vars = {
+            'name': 'eth0',
+            'hwaddr': '12:34:56:ab:cd:ef',
+            'bootproto': 'static',
+            'ipaddr': '192.168.122.10',
+            'network': '192.168.122.0',
+            'netmask': '255.255.255.0',
+            'broadcast': '192.168.122.255',
+        }
+        expected = """\
+        HWADDR=12:34:56:ab:cd:ef
+        TYPE=Ethernet
+        BOOTPROTO=static
+        DEFROUTE=yes
+        PEERDNS=yes
+        PEERROUTES=yes
+        IPADDR=192.168.122.10
+        NETWORK=192.168.122.0
+        NETMASK=255.255.255.0
+        BROADCAST=192.168.122.255
+        IPV4_FAILURE_FATAL=no
+        IPV6INIT=yes
+        IPV6_AUTOCONF=yes
+        IPV6_DEFROUTE=yes
+        IPV6_PEERDNS=yes
+        IPV6_PEERROUTES=yes
+        IPV6_FAILURE_FATAL=no
+        NAME=eth0
+        ONBOOT=yes""".replace('        ', '')
+        self.assertEqual(expected, nic._render_nic_template(nic_vars))
+
+    def test_ensure_nic_vars_no_name(self):
+        nic_vars = {
+            'hwaddr': '12:34:56:ab:cd:ef',
+            'bootproto': 'dhcp',
+            'ipaddr': '192.168.122.10',
+        }
+        self.assertRaises(ValueError, nic._ensure_nic_vars, nic_vars)
+
+    def test_ensure_nic_vars_static_no_ip(self):
+        nic_vars = {
+            'name': 'eth0',
+            'hwaddr': '12:34:56:ab:cd:ef',
+            'bootproto': 'static',
+        }
+        self.assertRaises(ValueError, nic._ensure_nic_vars, nic_vars)
+
+    def test_ensure_nic_vars_minimal(self):
+        nic_vars = {
+            'name': 'eth0',
+        }
+        ensured = nic._ensure_nic_vars(nic_vars)
+        self.assertEqual(3, len(ensured))
+        self.assertEqual('eth0', ensured['name'])
+        self.assertEqual('dhcp', ensured['bootproto'])
+        self.assertThat(
+            ensured['hwaddr'],
+            matchers.MatchesRegex(
+                '^52:54:00:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}$'))
+
+    def test_ensure_nic_vars_static_minimal(self):
+        nic_vars = {
+            'name': 'eth0',
+            'hwaddr': '12:34:56:ab:cd:ef',
+            'bootproto': 'static',
+            'ipaddr': '192.168.122.10',
+        }
+        expected = {
+            'name': 'eth0',
+            'hwaddr': '12:34:56:ab:cd:ef',
+            'bootproto': 'static',
+            'ipaddr': '192.168.122.10',
+            'network': '192.168.122.0',
+            'netmask': '255.255.255.0',
+            'broadcast': '192.168.122.255',
+        }
+        self.assertEqual(expected, nic._ensure_nic_vars(nic_vars))
+
+    def test_ensure_nic_vars_dhcp(self):
+        nic_vars = {
+            'name': 'eth0',
+            'hwaddr': '12:34:56:ab:cd:ef',
+            'bootproto': 'dhcp',
+            'ipaddr': '192.168.122.10',
+        }
+        expected = {
+            'name': 'eth0',
+            'hwaddr': '12:34:56:ab:cd:ef',
+            'bootproto': 'dhcp',
+        }
+        self.assertEqual(expected, nic._ensure_nic_vars(nic_vars))
+
+    def test_generate_mac_address(self):
+        # testing randomness is bad, but in this case the probability
+        # of non-deterministic failure is extremely low
+        self.assertThat(
+            nic._generate_mac_address(),
+            matchers.MatchesRegex(
+                '^52:54:00:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}$'))
