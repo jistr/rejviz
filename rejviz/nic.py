@@ -15,6 +15,11 @@ import random
 
 import jinja2
 
+import rejviz.utils as utils
+
+
+NIC_CONFIG_PREFIX = 'etc/sysconfig/network-scripts/ifcfg-'
+
 
 def process_args(args, tmp_dir):
     final_args = []
@@ -36,7 +41,17 @@ def process_args(args, tmp_dir):
 
 
 def _nic_values_to_args(nic_string, tmp_dir):
-    pass
+    nic_vars = _ensure_nic_vars(utils.parse_keyvals(nic_string))
+    config_contents = _render_nic_template(nic_vars)
+    config_file_path = NIC_CONFIG_PREFIX + nic_vars['name']
+    tmp_config_file_path = path.join(tmp_dir, config_file_path)
+    target_config_file_path = path.join('/', config_file_path)
+    with open(tmp_config_file_path, 'w') as config_file:
+        config_file.write(config_contents)
+    return [
+        '--upload',
+        ':'.join([tmp_config_file_path, target_config_file_path]),
+    ]
 
 
 def _render_nic_template(nic_vars):

@@ -63,6 +63,29 @@ class NicTest(tutils.TestCase):
         nic_values_to_args.assert_called_with(
             'ipaddr=192.168.122.10;hwaddr=ab:cd:ef:gh:ij', '/tmp/dir')
 
+    @mock.patch('rejviz.nic._ensure_nic_vars', return_value={'name': 'eth0'})
+    @mock.patch('rejviz.nic._render_nic_template', return_value='rendered')
+    @mock.patch('rejviz.nic.open', new_callable=mock.mock_open, create=True)
+    def test_nic_values_to_args(self, open_, render_nic_template,
+                                ensure_nic_vars):
+        # run
+        args = nic._nic_values_to_args('name=eth0', '/tmp/rejviz-builder-123')
+
+        # verify
+        ensure_nic_vars.assert_called_with({'name': 'eth0'})
+        render_nic_template.assert_called_with({'name': 'eth0'})
+        open_.assert_called_with(
+            '/tmp/rejviz-builder-123/etc/sysconfig/network-scripts/ifcfg-eth0',
+            'w')
+        open_().write.assert_called_with('rendered')
+        self.assertEqual(
+            [
+                '--upload',
+                ("/tmp/rejviz-builder-123/etc/sysconfig/network-scripts/"
+                 "ifcfg-eth0:/etc/sysconfig/network-scripts/ifcfg-eth0"),
+            ],
+            args)
+
     def test_render_nic_template(self):
         nic_vars = {
             'name': 'eth0',
