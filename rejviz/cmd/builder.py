@@ -40,4 +40,5 @@ def _process_args(args, tmp_dir):
 
 def _run_virt_builder(args):
     command_line = ["virt-builder"] + args
+    LOG.info("Calling virt-builder: %s" % " ".join(command_line))
     subprocess.call(command_line)
