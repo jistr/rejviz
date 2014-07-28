@@ -49,8 +49,11 @@ def _nic_values_to_args(nic_string, tmp_dir):
     config_contents = _render_nic_template(nic_vars)
     config_file_path = NIC_CONFIG_PREFIX + nic_vars['name']
     tmp_config_file_path = path.join(tmp_dir, config_file_path)
+    tmp_config_dir_path = path.dirname(tmp_config_file_path)
     target_config_file_path = path.join('/', config_file_path)
-    os.makedirs(path.dirname(tmp_config_file_path), 0o700)
+
+    if not path.exists(tmp_config_dir_path):
+        os.makedirs(tmp_config_dir_path, 0o700)
     with open(tmp_config_file_path, 'w') as config_file:
         config_file.write(config_contents)
     LOG.info("Adding NIC with params %s", str(nic_vars))
