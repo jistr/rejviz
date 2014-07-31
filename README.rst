@@ -8,7 +8,7 @@ libguestfs-tools.
 Currently `rejviz-builder` command is implemented.
 
 rejviz-builder
---------------
+==============
 
 A command that proxies to `virt-builder` and adds a custom `--nic`
 option, which allows to configure network interfaces on the image
@@ -44,10 +44,10 @@ Example usage:
         --nic name=eth2,ipaddr=192.168.123.15
 
 Design doc
-==========
+----------
 
 Use cases
----------
+=========
 
 * Create a VM image
 
@@ -82,7 +82,7 @@ Use cases
     ``/etc/sysconfig/network-scripts``
 
 I/O view
---------
+========
 
 * Creating an image
 
