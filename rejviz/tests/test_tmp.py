@@ -11,10 +11,10 @@
 # permissions and limitations under the License.
 
 import mock
-import testtools.matchers as matchers
+from testtools import matchers
 
 import rejviz.tests.utils as tutils
-import rejviz.tmp as tmp
+from rejviz import tmp
 
 
 class TmpTest(tutils.TestCase):

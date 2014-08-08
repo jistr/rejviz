@@ -12,12 +12,12 @@
 
 import logging
 import os
-import os.path as path
+from os import path
 import random
 
 import jinja2
 
-import rejviz.utils as utils
+from rejviz import utils
 
 
 LOG = logging.getLogger(__file__)

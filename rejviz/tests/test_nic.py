@@ -11,9 +11,9 @@
 # permissions and limitations under the License.
 
 import mock
-import testtools.matchers as matchers
+from testtools import matchers
 
-import rejviz.nic as nic
+from rejviz import nic
 import rejviz.tests.utils as tutils
 
 

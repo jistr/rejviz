@@ -12,7 +12,7 @@
 
 import mock
 
-import rejviz.cmd.builder as builder
+from rejviz.cmd import builder
 import rejviz.tests.utils as tutils
 
 

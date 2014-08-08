@@ -14,8 +14,8 @@ import logging
 import subprocess
 import sys
 
-import rejviz.nic as nic
-import rejviz.tmp as tmp
+from rejviz import nic
+from rejviz import tmp
 
 
 logging.basicConfig(level=logging.INFO)

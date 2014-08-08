@@ -11,7 +11,7 @@
 # permissions and limitations under the License.
 
 import rejviz.tests.utils as tutils
-import rejviz.utils as utils
+from rejviz import utils
 
 
 class UtilsTest(tutils.TestCase):

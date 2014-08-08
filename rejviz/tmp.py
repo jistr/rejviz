@@ -11,7 +11,7 @@
 # permissions and limitations under the License.
 
 import os
-import os.path as path
+from os import path
 import random
 import shutil
 
