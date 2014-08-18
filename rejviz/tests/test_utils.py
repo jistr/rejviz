@@ -20,3 +20,15 @@ class UtilsTest(tutils.TestCase):
         expected = {'a': 'b', 'c': 'd'}
         self.assertEqual(expected, utils.parse_keyvals("a=b,c=d"))
         self.assertEqual(expected, utils.parse_keyvals("a:b/c:d", '/', ':'))
+
+    def test_extract_domain_or_image_args(self):
+        args1 = ['--something', '-d', 'domain', 'somethingelse']
+        args2 = ['-b', '--something', '-a', 'image', 'somethingelse']
+        args3 = ['-b', '-c', '--something']
+
+        self.assertEqual(['-d', 'domain'],
+                         utils.extract_domain_or_image_args(args1))
+        self.assertEqual(['-a', 'image'],
+                         utils.extract_domain_or_image_args(args2))
+        self.assertRaises(ValueError,
+                          utils.extract_domain_or_image_args, args3)

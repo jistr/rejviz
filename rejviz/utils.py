@@ -22,3 +22,12 @@ def parse_keyvals(keyvals_string, item_separator=',', kv_separator='='):
         return keyvals
 
     return reduce(keyvals_to_hash, keyvals_raw, {})
+
+
+def extract_domain_or_image_args(args):
+    if '-d' in args:
+        return ['-d', args[args.index('-d') + 1]]
+    elif '-a' in args:
+        return ['-a', args[args.index('-a') + 1]]
+    else:
+        raise ValueError("No -d or -a found in arguments.")

@@ -1,0 +1,16 @@
+aug-init / 0
+{% for name in nic_names
+%}echo @name
+echo {{ name }}
+echo @type
+-aug-get /files{{ nic_config_dir }}/{{ nic_config_prefix }}{{ name }}/TYPE
+echo @hwaddr
+-aug-get /files{{ nic_config_dir }}/{{ nic_config_prefix }}{{ name }}/HWADDR
+echo @bootproto
+-aug-get /files{{ nic_config_dir }}/{{ nic_config_prefix }}{{ name }}/BOOTPROTO
+echo @network
+-aug-get /files{{ nic_config_dir }}/{{ nic_config_prefix }}{{ name }}/NETWORK
+echo @netmask
+-aug-get /files{{ nic_config_dir }}/{{ nic_config_prefix }}{{ name }}/NETMASK
+echo @-----
+{% endfor %}

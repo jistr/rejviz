@@ -14,6 +14,8 @@ import logging
 import subprocess
 import sys
 
+from rejviz import nic_mappings
+
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
 
@@ -23,8 +25,8 @@ def main():
     _run_virt_install(virt_install_args)
 
 
-def _process_args(args):
-    return args
+def _process_args(unprocessed_args):
+    return nic_mappings.process_nic_mappings(unprocessed_args)
 
 
 def _run_virt_install(args):
