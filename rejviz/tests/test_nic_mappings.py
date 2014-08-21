@@ -102,11 +102,11 @@ class NicMappingTest(tutils.TestCase):
 
     def test_has_nic_mapping_args(self):
         self.assertTrue(nic_mappings._has_nic_mapping_args(
-            ['-d', 'domain', '--auto-nic-mappings']))
+            ['--disk', '/image', '--auto-nic-mappings']))
         self.assertTrue(nic_mappings._has_nic_mapping_args(
-            ['-d', 'domain', '--nic-mappings', 'eth0=net1']))
+            ['--disk', '/image', '--nic-mappings', 'eth0=net1']))
         self.assertFalse(nic_mappings._has_nic_mapping_args(
-            ['-d', 'domain']))
+            ['--disk', '/image']))
 
     @mock.patch('subprocess.Popen')
     @mock.patch('rejviz.nic_mappings._get_nic_names_from_image')
@@ -117,12 +117,12 @@ class NicMappingTest(tutils.TestCase):
         get_nic_names.return_value = ['eth0', 'eth1', 'lo']
 
         # test
-        nics = nic_mappings._fetch_nics_from_image(['-d', 'domain'])
+        nics = nic_mappings._fetch_nics_from_image(['--disk', '/image'])
         popen.assert_called_with(
-            ['guestfish', '-i', '--ro', '-d', 'domain'], stdin=subprocess.PIPE,
+            ['guestfish', '-i', '--ro', '-a', '/image'], stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         popen.return_value.communicate.assert_called_with(NICS_SCRIPT)
-        get_nic_names.assert_called_with(['-d', 'domain'])
+        get_nic_names.assert_called_with(['-a', '/image'])
         self.assertEqual(2, len(nics))
         self.assertEqual(['eth0', 'eth1'], [n['name'] for n in nics])
 
@@ -138,9 +138,9 @@ class NicMappingTest(tutils.TestCase):
 
         self.assertEqual(
             ['eth0', 'eth1'],
-            nic_mappings._get_nic_names_from_image(['-d', 'domain']))
+            nic_mappings._get_nic_names_from_image(['-a', '/image']))
         check_output.assert_called_with(
-            ['virt-ls', '-d', 'domain',
+            ['virt-ls', '-a', '/image',
              '/etc/sysconfig/network-scripts'])
 
     def test_parse_nics_output(self):

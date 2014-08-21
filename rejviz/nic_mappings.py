@@ -47,7 +47,7 @@ def _has_nic_mapping_args(args):
 
 
 def _fetch_nics_from_image(args):
-    image_args = utils.extract_domain_or_image_args(args)
+    image_args = utils.extract_image_args_from_disks(args)
     nic_names = _get_nic_names_from_image(image_args)
     command = ['guestfish', '-i', '--ro'] + image_args
     with open(FETCH_SCRIPT_TEMPLATE) as template_file:

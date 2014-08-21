@@ -32,3 +32,15 @@ class UtilsTest(tutils.TestCase):
                          utils.extract_domain_or_image_args(args2))
         self.assertRaises(ValueError,
                           utils.extract_domain_or_image_args, args3)
+
+    def test_extract_image_args_from_disks(self):
+        args1 = ['--disk', '/path/to/image,opt1=val1,opt2=val2']
+        args2 = ['--disk', 'opt1=val1,path=/path/to/image,opt2=val2']
+        args3 = ['-b', '-c', '--something']
+
+        self.assertEqual(['-a', '/path/to/image'],
+                         utils.extract_image_args_from_disks(args1))
+        self.assertEqual(['-a', '/path/to/image'],
+                         utils.extract_image_args_from_disks(args2))
+        self.assertRaises(ValueError,
+                          utils.extract_domain_or_image_args, args3)

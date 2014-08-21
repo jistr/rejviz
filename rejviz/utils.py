@@ -31,3 +31,26 @@ def extract_domain_or_image_args(args):
         return ['-a', args[args.index('-a') + 1]]
     else:
         raise ValueError("No -d or -a found in arguments.")
+
+
+def extract_image_args_from_disks(args):
+    def image_from_disk_opts(raw_opts):
+        opts = raw_opts.split(',')
+
+        # --disk /some/storage/path[,opt1=val1]...
+        if opts[0].find('=') == -1:
+            return opts[0]
+
+        # --disk opt1=val1,opt2=val2,...  (looking for 'path' option)
+        for optval in opts:
+            opt, val = optval.split('=', 1)
+            if opt == 'path':
+                return val
+
+        raise ValueError("Disk options '%s' do not contain an image path."
+                         % raw_opts)
+
+    if '--disk' in args:
+        return ['-a', image_from_disk_opts(args[args.index('--disk') + 1])]
+    else:
+        raise ValueError("No --disk found in arguments.")
