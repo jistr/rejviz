@@ -10,12 +10,14 @@
 # implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+from copy import deepcopy
 import logging
 from os import path
 import subprocess
 
 import jinja2
 
+from rejviz import libvirt_nets
 from rejviz import utils
 
 
@@ -38,12 +40,26 @@ def process_nic_mappings(args):
     for nic in nics:
         LOG.debug('NIC %s: %s', nic['name'], str(nic))
 
-    # TODO(jistr): complete the implementation
-    return args
+    networks = libvirt_nets.get_libvirt_networks()
+
+    mapped_nics = nics
+    if _auto_nic_mappings_enabled(args):
+        mapped_nics = _map_nics_auto(nics, networks)
+
+    manual_mappings = _parse_manual_nic_mappings(args)
+    mapped_nics = _map_nics_manual(mapped_nics, manual_mappings)
+
+    # TODO(jistr): check mappings' sanity
+
+    return _convert_nic_mappings_args(args, mapped_nics)
 
 
 def _has_nic_mapping_args(args):
     return '--nic-mappings' in args or '--auto-nic-mappings' in args
+
+
+def _auto_nic_mappings_enabled(args):
+    return '--auto-nic-mappings' in args
 
 
 def _fetch_nics_from_image(args):
@@ -101,3 +117,88 @@ def _parse_nics_output(output):
 def _filter_ethernet_nics(nics):
     return [nic for nic in nics
             if nic['type'] and nic['type'].lower() == 'ethernet']
+
+
+def _map_nics_auto(nics, networks):
+    mapped_nics = deepcopy(nics)
+
+    for nic in mapped_nics:
+        if not nic.get('network'):
+            continue
+
+        for network in networks:
+            if network['network'] == nic['network']:
+                nic['libvirt_network'] = network['name']
+
+    return mapped_nics
+
+
+def _map_nics_manual(nics, manual_mappings):
+    mapped_nics = deepcopy(nics)
+
+    for nic in mapped_nics:
+        if manual_mappings.get(nic['name']):
+            nic['libvirt_network'] = manual_mappings[nic['name']]
+
+    return mapped_nics
+
+
+def _parse_manual_nic_mappings(args):
+    if '--nic-mappings' not in args:
+        return {}
+
+    raw_mappings = args[args.index('--nic-mappings') + 1]
+    keyvals = raw_mappings.split(',')
+    return dict(keyval.split('=', 1) for keyval in keyvals)
+
+
+def _convert_nic_mappings_args(args, mapped_nics):
+    def get_nic_names(manual_mappings):
+        keyvals = manual_mappings.split(',')
+        return [keyval.split('=', 1)[0] for keyval in keyvals]
+
+    inserted_nic_names = set()
+
+    # convert manual mappings
+    converted_manual = []
+    args_iter = iter(args)
+    for arg in args_iter:
+        if arg == '--nic-mappings':
+            mappings_value = next(args_iter)
+            nic_names = get_nic_names(mappings_value)
+            inserted_nic_names = inserted_nic_names.union(set(nic_names))
+            converted_manual.extend(_network_args(nic_names, mapped_nics))
+        else:
+            converted_manual.append(arg)
+
+    # convert automatic mappings
+    converted_auto = []
+    for arg in converted_manual:
+        if arg == '--auto-nic-mappings':
+            all_nic_names = set(nic['name'] for nic in mapped_nics)
+            names_to_insert = all_nic_names.difference(inserted_nic_names)
+            inserted_nic_names = inserted_nic_names.union(names_to_insert)
+            converted_auto.extend(_network_args(names_to_insert, mapped_nics))
+        else:
+            converted_auto.append(arg)
+
+    return converted_auto
+
+
+def _network_args(nic_names, mapped_nics):
+    args = []
+
+    for nic_name in nic_names:
+        nic = _nic_by_name(nic_name, mapped_nics)
+        args.append('--network')
+        args.append('network=%(libvirt_network)s,mac=%(hwaddr)s,model=virtio'
+                    % nic)
+
+    return args
+
+
+def _nic_by_name(nic_name, nics):
+    for nic in nics:
+        if nic['name'] == nic_name:
+            return nic
+    raise ValueError("NIC with name '%s' not found" % nic_name)

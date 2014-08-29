@@ -108,6 +108,12 @@ class NicMappingTest(tutils.TestCase):
         self.assertFalse(nic_mappings._has_nic_mapping_args(
             ['--disk', '/image']))
 
+    def test_auto_nic_mappings_enabled(self):
+        self.assertTrue(nic_mappings._auto_nic_mappings_enabled(
+            ['--abc', '--auto-nic-mappings', '--abcdef']))
+        self.assertFalse(nic_mappings._auto_nic_mappings_enabled(
+            ['--abc', '--nic-mappings', 'a=b', '--abcdef']))
+
     @mock.patch('subprocess.Popen')
     @mock.patch('rejviz.nic_mappings._get_nic_names_from_image')
     def test_fetch_nics_from_image(self, get_nic_names, popen):
@@ -181,3 +187,117 @@ class NicMappingTest(tutils.TestCase):
                  'network': '127.0.0.0', 'netmask': '255.0.0.0'},
             ]),
         )
+
+    def test_map_nics_auto(self):
+        mapped_nics = nic_mappings._map_nics_auto(
+            [
+                {'name': 'eth0', 'type': 'Ethernet',
+                 'hwaddr': '52:54:00:12:34:56', 'bootproto': 'dhcp',
+                 'network': None, 'netmask': None},
+                {'name': 'eth1', 'type': 'Ethernet',
+                 'hwaddr': '52:54:00:12:34:78', 'bootproto': 'static',
+                 'network': '192.168.123.0', 'netmask': '255.255.255.0'},
+                {'name': 'eth2', 'type': 'Ethernet',
+                 'hwaddr': '52:54:00:12:34:90', 'bootproto': 'static',
+                 'network': '192.168.124.0', 'netmask': '255.255.255.0'},
+            ],
+            [
+                {'name': 'net1',
+                 'dhcp': 'false',
+                 'network': '192.168.123.0',
+                 'netmask': '255.255.255.0'},
+                {'name': 'net2',
+                 'dhcp': 'false',
+                 'network': '192.168.130.0',
+                 'netmask': '255.255.255.0'},
+            ])
+
+        self.assertEqual(
+            [
+                {'name': 'eth0', 'type': 'Ethernet',
+                 'hwaddr': '52:54:00:12:34:56', 'bootproto': 'dhcp',
+                 'network': None, 'netmask': None},
+                {'name': 'eth1', 'type': 'Ethernet',
+                 'hwaddr': '52:54:00:12:34:78', 'bootproto': 'static',
+                 'network': '192.168.123.0', 'netmask': '255.255.255.0',
+                 'libvirt_network': 'net1'},
+                {'name': 'eth2', 'type': 'Ethernet',
+                 'hwaddr': '52:54:00:12:34:90', 'bootproto': 'static',
+                 'network': '192.168.124.0', 'netmask': '255.255.255.0'},
+            ],
+            mapped_nics)
+
+    def test_map_nics_manual(self):
+        mapped_nics = nic_mappings._map_nics_manual(
+            [
+                {'name': 'eth0', 'type': 'Ethernet',
+                 'hwaddr': '52:54:00:12:34:56', 'bootproto': 'dhcp',
+                 'network': None, 'netmask': None},
+                {'name': 'eth1', 'type': 'Ethernet',
+                 'hwaddr': '52:54:00:12:34:78', 'bootproto': 'static',
+                 'network': '192.168.123.0', 'netmask': '255.255.255.0',
+                 'libvirt_network': 'net1'},
+                {'name': 'eth2', 'type': 'Ethernet',
+                 'hwaddr': '52:54:00:12:34:90', 'bootproto': 'static',
+                 'network': '192.168.124.0', 'netmask': '255.255.255.0'},
+            ],
+            {'eth0': 'net0'})
+
+        self.assertEqual(
+            [
+                {'name': 'eth0', 'type': 'Ethernet',
+                 'hwaddr': '52:54:00:12:34:56', 'bootproto': 'dhcp',
+                 'network': None, 'netmask': None,
+                 'libvirt_network': 'net0'},
+                {'name': 'eth1', 'type': 'Ethernet',
+                 'hwaddr': '52:54:00:12:34:78', 'bootproto': 'static',
+                 'network': '192.168.123.0', 'netmask': '255.255.255.0',
+                 'libvirt_network': 'net1'},
+                {'name': 'eth2', 'type': 'Ethernet',
+                 'hwaddr': '52:54:00:12:34:90', 'bootproto': 'static',
+                 'network': '192.168.124.0', 'netmask': '255.255.255.0'},
+            ],
+            mapped_nics)
+
+    def test_parse_manual_nic_mappings(self):
+        mappings = nic_mappings._parse_manual_nic_mappings(
+            ['--abc', '--nic-mappings', 'eth0=net0,eth1=net1', '--def'])
+
+        self.assertEqual({'eth0': 'net0', 'eth1': 'net1'}, mappings)
+
+    def test_convert_nic_mappings_args(self):
+        args = ['--abc', '--nic-mappings', 'eth0=net0', '--auto-nic-mappings',
+                '--def']
+        mapped_nics = [
+            {'name': 'eth0', 'type': 'Ethernet',
+             'hwaddr': '52:54:00:12:34:56', 'bootproto': 'dhcp',
+             'network': None, 'netmask': None,
+             'libvirt_network': 'net0'},
+            {'name': 'eth1', 'type': 'Ethernet',
+             'hwaddr': '52:54:00:12:34:78', 'bootproto': 'static',
+             'network': '192.168.123.0', 'netmask': '255.255.255.0',
+             'libvirt_network': 'net1'},
+        ]
+
+        self.assertEqual(
+            ['--abc',
+             '--network',
+             'network=net0,mac=52:54:00:12:34:56,model=virtio',
+             '--network',
+             'network=net1,mac=52:54:00:12:34:78,model=virtio',
+             '--def'],
+            nic_mappings._convert_nic_mappings_args(args, mapped_nics))
+
+    def test_nic_by_name(self):
+        eth0 = {'name': 'eth0', 'type': 'Ethernet',
+                'hwaddr': '52:54:00:12:34:56', 'bootproto': 'dhcp',
+                'network': None, 'netmask': None,
+                'libvirt_network': 'net0'}
+        eth1 = {'name': 'eth1', 'type': 'Ethernet',
+                'hwaddr': '52:54:00:12:34:78', 'bootproto': 'static',
+                'network': '192.168.123.0', 'netmask': '255.255.255.0',
+                'libvirt_network': 'net1'}
+        nics = [eth0, eth1]
+
+        self.assertEqual(eth0, nic_mappings._nic_by_name('eth0', nics))
+        self.assertRaises(ValueError, nic_mappings._nic_by_name, 'eth2', nics)
