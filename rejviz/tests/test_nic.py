@@ -98,6 +98,7 @@ class NicTest(tutils.TestCase):
             'network': '192.168.122.0',
             'netmask': '255.255.255.0',
             'broadcast': '192.168.122.255',
+            'gateway': '192.168.122.1',
         }
         expected = """\
         HWADDR=12:34:56:ab:cd:ef
@@ -110,6 +111,7 @@ class NicTest(tutils.TestCase):
         NETWORK=192.168.122.0
         NETMASK=255.255.255.0
         BROADCAST=192.168.122.255
+        GATEWAY=192.168.122.1
         IPV4_FAILURE_FATAL=no
         IPV6INIT=yes
         IPV6_AUTOCONF=yes
