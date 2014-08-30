@@ -106,6 +106,8 @@ def _ensure_nic_vars(nic_vars):
         new_vars.pop('netmask', None)
         new_vars.pop('broadcast', None)
         new_vars.pop('gateway', None)
+        new_vars.pop('dns1', None)
+        new_vars.pop('dns2', None)
 
     LOG.debug("NIC vars after processing %s", str(new_vars))
     return new_vars
